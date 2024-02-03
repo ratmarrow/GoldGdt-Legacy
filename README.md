@@ -8,16 +8,14 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 ### Update 3
 - Changed the camera movement to be based in the `_input()` function alongside rewriting the camera position interpolation to use the physics interpolation fraction.
 
-## How to setup
+## Installation
 
-### Installation
-
-## From GitHub
+### From GitHub:
 1. Open your Godot project.
 2. Copy the 'addons' folder from this repository into the project folder for your Godot project.
 3. Drop the 'Player' scene found in the add-on into whatever scenes you need it in.
 
-## Project Settings
+## Setup
 
 ### Input Map
 
