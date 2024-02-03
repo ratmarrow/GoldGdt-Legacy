@@ -175,7 +175,7 @@ func _physics_process(delta):
 func _handle_camera() -> void:
 	head.rotate_y((-look_input.x * mouse_sensitivity) * 0.0001)
 	vision.rotate_x((-look_input.y * mouse_sensitivity) * 0.0001)
-	vision.rotation.x = clamp(vision.rotation.x, -1.5, 1.5)
+	vision.rotation.x = clamp(vision.rotation.x, deg_to_rad(-90), deg_to_rad(90))
 	look_input = Vector2.ZERO
 
 # Intercepts CharacterBody3D collision logic a bit to add slope sliding, recreating surfing.
