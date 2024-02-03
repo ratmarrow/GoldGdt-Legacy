@@ -3,8 +3,6 @@
 
 GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4.
 
-This is a project template that comes with the custom inputs and physics changes, and is the recommended version to reduce hiccups setting up GoldGdt.
-
 ## Changelog
 
 ### Update 3
@@ -12,18 +10,25 @@ This is a project template that comes with the custom inputs and physics changes
 
 ## How to setup
 
-When downloading the foundation, you can simply open it using the Godot Launcher, and immediately start tinkering with it.
+### Installation
 
-## How to update
+## From GitHub
+1. Open your Godot project.
+2. Copy the 'addons' folder from this repository into the project folder for your Godot project.
+3. Drop the 'Player' scene found in the add-on into whatever scenes you need it in.
 
-Every update for GoldGdt going forward will be regarding scripts, so all you should have to do is replace the .gd files.
+## Project Settings
 
-## Things to note
+### Input Map
 
-### Movement Physics
+GoldGdt has pre-defined inputs that it is programmed around. Unless you want to go into the code and change them to your own input mappings, I recommend recreating these inputs in your Project Settings.
 
-The input and physics in the GoldGdtMovement.gd script are handled in `_physics_process()` to ensure that the movement feels consistent regardless of framerate, which was a shortcoming of games like Half-Life 1.
+![image](https://github.com/ratmarrow/GoldGdt/assets/155324574/b9d3efcd-f289-4f23-8bd3-1486063fcf2a)
 
+
+### Physics
+
+The input and physics in the GoldGdtMovement.gd script are handled in `_physics_process()` to ensure that the movement feels consistent regardless of framerate.
 
 The default physics update rate is 100 frames-per-second in order to make the physics behave like Half-Life 1 speedruns [as explained here](https://wiki.sourceruns.org/wiki/FPS_Effects), which in turn makes bunnyhopping faster. This can be changed by going into `Project Settings>Physics>Common`
 
