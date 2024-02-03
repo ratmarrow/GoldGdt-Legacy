@@ -1,0 +1,78 @@
+[gd_scene load_steps=3 format=3 uid="uid://byo3pgqb3h8p1"]
+
+[ext_resource type="Script" path="res://scripts/GoldGdtMovement.gd" id="1_7vdsq"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8dly4"]
+size = Vector3(0.813, 1.829, 0.813)
+
+[node name="Player" type="Node3D"]
+
+[node name="Pawn" type="CharacterBody3D" parent="." node_paths=PackedStringArray("duck_timer", "player_hull", "head", "vision", "camera", "speedometer", "info")]
+top_level = true
+collision_layer = 2
+floor_stop_on_slope = false
+floor_constant_speed = true
+platform_on_leave = 1
+safe_margin = 0.002
+script = ExtResource("1_7vdsq")
+duck_timer = NodePath("DuckTimer")
+player_hull = NodePath("BoundingBox")
+head = NodePath("../Head")
+vision = NodePath("../Head/Vision")
+camera = NodePath("../Head/Vision/Camera3D")
+speedometer = NodePath("../HUD/Speedometer")
+info = NodePath("../HUD/Player Info")
+
+[node name="BoundingBox" type="CollisionShape3D" parent="Pawn"]
+shape = SubResource("BoxShape3D_8dly4")
+
+[node name="DuckTimer" type="Timer" parent="Pawn"]
+one_shot = true
+
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.711, 0)
+top_level = true
+
+[node name="Vision" type="Node3D" parent="Head"]
+
+[node name="Camera3D" type="Camera3D" parent="Head/Vision"]
+fov = 110.0
+near = 0.001
+
+[node name="HUD" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Speedometer" type="Label" parent="HUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -62.5
+offset_top = -84.0
+offset_right = 62.5
+offset_bottom = -47.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "999 in/s (goldsrc)
+999 m/s (godot)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Player Info" type="Label" parent="HUD"]
+layout_mode = 1
+offset_right = 125.0
+offset_bottom = 37.0
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 16
+text = "pos (meters): (x, y, z)
+vel (meters): (x, y, z)
+grounded: true/false"
