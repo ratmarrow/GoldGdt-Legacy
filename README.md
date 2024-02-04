@@ -8,6 +8,13 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 ### Update 3.1
 - Fixed a bug with the camera rotation clamp causing the camera to flip around when looking directly up or down.
 
+## Roadmap
+
+- Relocating movement variables into Resources.
+- Detection and response for stair-like geometry.
+- Creating a system for ladder and water movement.
+- Viewmodel system (maybe).
+
 ## Installation
 
 ### From GitHub:
