@@ -53,6 +53,7 @@ var duck_on : bool = false
 const FORWARD_SPEED = 8.128 # Forward and backward move speed, measured in meters
 const SIDE_SPEED = 8.128 # Left and right move speed, measured in meters
 
+
 const WALKACCEL = 10.0 # Ground acceleration multiplier, engine agnostic
 const MAXAIRSPEED = 0.762 # The maximum speed you can accelerate to in the _airaccelerate() function, measured in meters (30 HU)
 const AIRACCEL = 10.0 # Air acceleration multiplier, engine agnostic
@@ -173,9 +174,8 @@ func _physics_process(delta):
 	vision.rotation.z = _calc_roll(0.6, 200)
 
 func _handle_camera() -> void:
-	head.rotate_y((-look_input.x * mouse_sensitivity) * 0.0001)
-	vision.rotate_x((-look_input.y * mouse_sensitivity) * 0.0001)
-	vision.rotation.x = clamp(vision.rotation.x, deg_to_rad(-90), deg_to_rad(90))
+	head.rotation.y -= (look_input.x * mouse_sensitivity) * 0.0001
+	vision.rotation.x = clamp(vision.rotation.x - (look_input.y * mouse_sensitivity) * 0.0001, -1.5, 1.5)
 	look_input = Vector2.ZERO
 
 # Intercepts CharacterBody3D collision logic a bit to add slope sliding, recreating surfing.
