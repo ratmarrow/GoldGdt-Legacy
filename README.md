@@ -19,7 +19,7 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 
 ### Input Map
 
-GoldGdt has pre-defined inputs that it is programmed around. Unless you want to go into the code and change them to your own input mappings, I recommend recreating these inputs in your Project Settings.
+GoldGdt has pre-defined inputs that it is programmed around. Unless you want to go into the code and change them to your own input mappings, I recommend recreating these inputs in your Project Settings, binding them to whatever you see fit.
 
 ![image](https://github.com/ratmarrow/GoldGdt/assets/155324574/b9d3efcd-f289-4f23-8bd3-1486063fcf2a)
 
