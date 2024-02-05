@@ -20,97 +20,49 @@
 #	
 #	-------------------------------------------------------------------------------------------------
 #	
-#	"GoldGdt" is an attempt at faithfully recreating the movement seen in GoldSrc games like Half-Life, Team Fortress: Classic, and Counter-Strike 1.6.
-#	Thank you for using GoldGdt, and happy developing!
+#	Thank you for using GoldGdt for your project!
 #	
 #	- ratmarrow <3
 
 extends CharacterBody3D
+class_name GoldGdtMovement
 
 #region Variables
-# A "Hammer Unit" (Quake, GoldSrc, etc.) is 1 inch.
-# multiply Godot units (meters) by this to get the Hammer unit conversion,
-# divide Hammer units by this to get the Godot unit conversion.
-const HAMMERUNIT = 39.37 
 
-# Debug
+@export var CHARACTER_VARS : CharacterVars ## Current [CharacterVars] resource being used by this player instance.
 
-@onready var start_pos : Vector3 = position
-
-# Player Input
-
-var input_vector : Vector2 = Vector2.ZERO
-var move_dir : Vector3 = Vector3.ZERO
-var jump_on : bool = false
-var duck_on : bool = false
-
-# Player Movement
-
-# Common movement speeds include:
-# 250 HU (6.350m) (Counter-Strike)
-# 320 HU (8.128m) (Half-Life)
-# 400 HU (10.160m) (Quake/Deathmatch Classic)
-const FORWARD_SPEED = 8.128 # Forward and backward move speed, measured in meters
-const SIDE_SPEED = 8.128 # Left and right move speed, measured in meters
-
-
-const WALKACCEL = 10.0 # Ground acceleration multiplier, engine agnostic
-const MAXAIRSPEED = 0.762 # The maximum speed you can accelerate to in the _airaccelerate() function, measured in meters (30 HU)
-const AIRACCEL = 10.0 # Air acceleration multiplier, engine agnostic
-const FRICTION = 4.0 # Friction multiplier, engine agnostic
-const STOPSPEED = 2.54 # Speed threshold for stopping in the _friction() function, measured in meters (100 HU)
-const GRAVITY = 20.32 # Speed of gravity, measured in meters (800 HU)
-const JUMPHEIGHT = 1.143 # Height of the player's jump, measured in meters (45 HU)
-const DUCKINGSPEEDMULTIPLIER = 0.333; # Value to multiply move_dir by when crouching, engine agnostic
-
+# Movement
+var input_vector : Vector2 = Vector2.ZERO # Collector for WASD input.
+var move_dir : Vector3 = Vector3.ZERO # Collector for speed and direction.
+var jump_on : bool = false # Jump input boolean.
+var duck_on : bool = false # Ducking input boolean.
 var FRICTION_STRENGTH = 1.0 # How much the overall friction calculation applies to your velocity. Not constant to allow for surface-based changes.
 
-# Player State
-@export var duck_timer : Timer
-var ducked : bool = false
+@export_group("Ducking")
+@export var duck_timer : Timer ## Timer used for ducking animation and collision hull swapping. Time is set in [method _duck] to 1 second.
+var ducked : bool = false 
 var ducking : bool = false
 
-# Player Dimensions
-# Currently, the player uses a capsule collision hull, which isn't accurate to GoldSrc. This was because I ran into issues with slop movement
-# using a Box Shape, but I am keeping the code like this in the even either someone can make Box Shape work, or if it's just a bug with Godot Physics.
+@export_group("Collision Hull")
+var BBOX_STANDING = BoxShape3D.new() # Cached BoxShape for standing.
+var BBOX_DUCKING = BoxShape3D.new() # Cached BoxShape for ducking.
+@export var player_hull : CollisionShape3D ## Player collision shape/hull, make sure it's a box unless you edit the script to use otherwise!
 
-const BBOX_STANDING_BOUNDS = Vector3(0.813, 1.829, 0.813) # 32 HU x 72 HU x 32 HU
-const BBOX_DUCKING_BOUNDS = Vector3(0.813, 0.914, 0.813) # 32 HU x 36 HU x 32 HU
-const VIEW_OFFSET = 0.711 # How much the camera hovers from player origin while standing, measured in meters (28 HU)
-const DUCK_VIEW_OFFSET = 0.305 # How much the camera hovers from player origin while crouching, measured in meters(12 HU)
+@export_group("Camera")
+var head_resting_position : Vector3 # Created during _physics_process() to position the player's head.
+var offset : float = 0.711 # Current offset from player's origin.
+var look_input : Vector2 # Collector for mouse input.
+var prev_headtrans : Transform3D # Used for camera position interpolation.
+var curr_headtrans : Transform3D # Used for camera position interpolation.
 
-var BBOX_STANDING = BoxShape3D.new() 
-var BBOX_DUCKING = BoxShape3D.new() 
+@export var head : Node3D ## Y-axis camera gimbal; also determines position of player's view.
+@export var vision : Node3D ## X-axis camera gimbal.
+@export var camera : Node3D ## Used for player view aesthetics such as camera tilt and bobbing.
 
-@export var player_hull : CollisionShape3D
-
-# Player Camera
-
-var mouse_sensitivity : float = 15.0
-var head_resting_position : Vector3
-var offset : float = 0.711
-var look_input : Vector2
-
-var prev_headtrans : Transform3D
-var curr_headtrans : Transform3D
-
-var camera_bob_freq : float = 0.008
-var camera_bob_amp : float = 12
-
-# FIXME: This can be handled leagues better than I handled it.
-@export var head : Node3D # Used for rotating the input_vector to where you are facing
-@export var vision : Node3D # Used for looking up and down in order to avoid any contamination in the input process
-@export var camera : Node3D # Used for the _calc_roll() function to avoid any contamination in the input process
-
-# UI
-
+@export_group("UI")
 @export var speedometer : Label
 @export var info : Label
 
-# Configuration
-
-## Allows holding down the "pm_jump" input to jump the moment you hit the ground
-var autohop : bool = true 
 #endregion
 
 # Using _ready() to initialize variables
@@ -118,17 +70,17 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 	# Set bounding box dimensions.
-	BBOX_STANDING.size = BBOX_STANDING_BOUNDS
-	BBOX_DUCKING.size = BBOX_DUCKING_BOUNDS
+	BBOX_STANDING.size = CHARACTER_VARS.HULL_STANDING_BOUNDS
+	BBOX_DUCKING.size = CHARACTER_VARS.HULL_DUCKING_BOUNDS
 	
 	prev_headtrans.origin = global_position + (Vector3.UP * offset)
 	curr_headtrans.origin = global_position + (Vector3.UP * offset)
 	
 	# Set hull and head position to default.
 	player_hull.shape = BBOX_STANDING
-	offset = VIEW_OFFSET
+	offset = CHARACTER_VARS.VIEW_OFFSET
 
-# Using _input() to handle collecting mouse input
+# Using _input() to handle mouse input
 func _input(event):
 	if event is InputEventMouseMotion:
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -138,13 +90,13 @@ func _input(event):
 
 # Using _process() to handle camera look logic
 func _process(delta):
-	# Camera logic
+	# Interpolate the player's resting position to the desired transform position.
 	head_resting_position = prev_headtrans.interpolate_with(curr_headtrans, clamp(Engine.get_physics_interpolation_fraction(), 0, 0.925)).origin
 	head.global_position = head_resting_position
 	
 	#region Character Info UI, remove if deemed necessary
 	var speed_format = "%s in/s (goldsrc)\n%s m/s (godot)"
-	var speed_string = speed_format % [str(roundi((Vector3(velocity.x * HAMMERUNIT, 0.0, velocity.z * HAMMERUNIT).length()))), str(roundi((Vector3(velocity.x, 0.0, velocity.z).length())))]
+	var speed_string = speed_format % [str(roundi((Vector3(velocity.x * 39.37, 0.0, velocity.z * 39.37).length()))), str(roundi((Vector3(velocity.x, 0.0, velocity.z).length())))]
 	speedometer.text = speed_string
 	
 	var info_format = "rendering fps: %s\nframetime: %s\npos (meters): %s\nvel (meters): %s\ngrounded: %s\ncrouching: %s"
@@ -160,25 +112,24 @@ func _process(delta):
 # GoldSrc games like Half-Life operated on the framerate the game was running at, which would make physics inconsistent.
 # You can change the physics update rate in the Project Settings, but I built this system around running at 100 FPS.
 func _physics_process(delta):
-	# FIXME: Debug code that teleports you to start_pos in case you fall out of map.
-	# Remove this condition and the action "debug_respawn" as you see fit.
-	if Input.is_action_just_pressed("debug_respawn"):
-		get_tree().quit()
-	
 	_handle_input()
 	_handle_movement(delta)
 	_handle_collision()
 	
+	# Set up the Transforms for the player's head position interpolation.
 	prev_headtrans.origin = curr_headtrans.origin
 	curr_headtrans.origin = global_position + (Vector3.UP * offset)
-	vision.rotation.z = _calc_roll(0.6, 200)
+	
+	# Create camera tilting.
+	camera.rotation.z = _calc_roll(0.65, 300)*2
 
+# Manipulates the player's camera gimbals for first-person looking
 func _handle_camera() -> void:
-	head.rotation.y -= (look_input.x * mouse_sensitivity) * 0.0001
-	vision.rotation.x = clamp(vision.rotation.x - (look_input.y * mouse_sensitivity) * 0.0001, -1.5, 1.5)
+	head.rotation.y -= (look_input.x * CHARACTER_VARS.MOUSE_SENSITIVITY) * 0.0001
+	vision.rotation.x = clamp(vision.rotation.x - (look_input.y * CHARACTER_VARS.MOUSE_SENSITIVITY) * 0.0001, -1.5, 1.5)
 	look_input = Vector2.ZERO
 
-# Intercepts CharacterBody3D collision logic a bit to add slope sliding, recreating surfing.
+# Intercepts CharacterBody3D collision logic a bit to add slope sliding, recreating surfing
 func _handle_collision() -> void:
 	var collided := move_and_slide()
 	if collided and not get_floor_normal():
@@ -190,19 +141,25 @@ func _handle_collision() -> void:
 
 # Gathers player input for use in movement calculations
 func _handle_input() -> void:
+	# Get input strength on the horizontal axes.
 	var ix = Input.get_action_raw_strength("pm_moveright") - Input.get_action_raw_strength("pm_moveleft")
 	var iy = Input.get_action_raw_strength("pm_movebackward") - Input.get_action_raw_strength("pm_moveforward")
-	input_vector = Vector2(ix, iy).normalized()
-	move_dir = head.transform.basis * Vector3(input_vector.x * SIDE_SPEED, 0, input_vector.y * FORWARD_SPEED)
 	
-	jump_on = Input.is_action_pressed("pm_jump") if autohop else Input.is_action_just_pressed("pm_jump")
+	# Collect input.
+	input_vector = Vector2(ix, iy).normalized()
+	
+	# Create vector that stores speed and direction.
+	move_dir = head.transform.basis * Vector3(input_vector.x * CHARACTER_VARS.SIDE_SPEED, 0, input_vector.y * CHARACTER_VARS.FORWARD_SPEED)
+	
+	# Gather jumping and crouching input.
+	jump_on = Input.is_action_pressed("pm_jump") if CHARACTER_VARS.AUTOHOP else Input.is_action_just_pressed("pm_jump")
 	duck_on = Input.is_action_pressed("pm_duck")
 
 # Handles movement and jumping physics
 func _handle_movement(delta: float) -> void:
 	# Add the gravity.
 	if not is_on_floor():
-		velocity.y -= GRAVITY * delta
+		velocity.y -= CHARACTER_VARS.GRAVITY * delta
 	
 	# Check for anything partaining to ducking every physics step
 	_duck()
@@ -210,13 +167,12 @@ func _handle_movement(delta: float) -> void:
 	# Check if we are on ground
 	if is_on_floor():
 		if jump_on:
-			_do_jump(delta) # Not running friction on ground if you press jump fast enough allows you to preserve all speed
-			#_airaccelerate(delta, move_dir.normalized(), move_dir.length(), AIRACCEL)
+			_do_jump(delta) # Not running friction on ground if you press jump fast enough allows you to preserve all speed.
 		else:
 			_friction(delta, FRICTION_STRENGTH)
-			_accelerate(delta, move_dir.normalized(), move_dir.length(), WALKACCEL)
+			_accelerate(delta, move_dir.normalized(), move_dir.length(), CHARACTER_VARS.ACCELERATION)
 	else: 
-		_airaccelerate(delta, move_dir.normalized(), move_dir.length(), AIRACCEL)
+		_airaccelerate(delta, move_dir.normalized(), move_dir.length(), CHARACTER_VARS.AIR_ACCELERATION)
 	
 	_camera_bob()
 
@@ -254,8 +210,8 @@ func _airaccelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: flo
 	var currentspeed : float
 	var wishspd : float = wishspeed
 	
-	if (wishspd > MAXAIRSPEED):
-		wishspd = MAXAIRSPEED
+	if (wishspd > CHARACTER_VARS.MAX_AIR_SPEED):
+		wishspd = CHARACTER_VARS.MAX_AIR_SPEED
 	
 	# See if we are changing direction a bit
 	currentspeed = velocity.dot(wishdir)
@@ -283,10 +239,10 @@ func _friction(delta: float, strength: float):
 	
 	# Bleed off some speed, but if we have less that the bleed
 	# threshold, bleed the threshold amount.
-	var control = STOPSPEED if (speed < STOPSPEED) else speed
+	var control =  CHARACTER_VARS.STOP_SPEED if (speed < CHARACTER_VARS.STOP_SPEED) else speed
 	
 	# Add the amount to the drop amount
-	var drop = control * (FRICTION * strength) * delta
+	var drop = control * (CHARACTER_VARS.FRICTION * strength) * delta
 	
 	# Scale the velocity.
 	var newspeed = speed - drop
@@ -303,10 +259,10 @@ func _friction(delta: float, strength: float):
 # Applies a jump force to the player.
 func _do_jump(delta: float) -> void:
 	# Apply the jump impulse
-	velocity.y = sqrt(2 * GRAVITY * 1.143)
+	velocity.y = sqrt(2 * CHARACTER_VARS.GRAVITY * 1.143)
 	
 	# Add in some gravity correction
-	velocity.y -= (GRAVITY * delta * 0.5 )
+	velocity.y -= (CHARACTER_VARS.GRAVITY * delta * 0.5 )
 
 # Handles crouching logic.
 func _duck() -> void:
@@ -315,7 +271,7 @@ func _duck() -> void:
 	
 	# Bring down the move direction to a third of it's speed.
 	if ducked:
-		move_dir *= DUCKINGSPEEDMULTIPLIER
+		move_dir *= CHARACTER_VARS.DUCKING_SPEED_MULTIPLIER
 	
 	# If we aren't ducking, but are holding the "pm_duck" input...
 	if duck_on:
@@ -329,7 +285,7 @@ func _duck() -> void:
 			if duck_timer.time_left <= 0.6 or !is_on_floor():
 				# Set the collision hull and view offset to the ducking counterpart.
 				player_hull.shape = BBOX_DUCKING
-				offset = DUCK_VIEW_OFFSET
+				offset = CHARACTER_VARS.DUCK_VIEW_OFFSET
 				ducked = true
 				ducking = false
 				
@@ -340,7 +296,7 @@ func _duck() -> void:
 				var fmore = 0.457
 					
 				frac = _spline_fraction(time, 2.5)
-				offset = ((DUCK_VIEW_OFFSET - fmore ) * frac) + (VIEW_OFFSET * (1-frac))
+				offset = ((CHARACTER_VARS.DUCK_VIEW_OFFSET - fmore ) * frac) + (CHARACTER_VARS.VIEW_OFFSET * (1-frac))
 	
 	# Check for if we are ducking and if we are no longer holding the "pm_duck" input...
 	if !duck_on and (ducking or ducked):
@@ -350,15 +306,17 @@ func _duck() -> void:
 # Checks to make sure uncrouching won't clip us into a ceiling.
 func _unduck():
 	if _unduck_trace(position + Vector3.UP * 0.458, BBOX_STANDING, self) == true:
+		# If there is a ceiling above the player that would cause us to clip into it when unducking, stay ducking.
 		ducked = true
 		return
-	else:
+	else: # Otherwise, unduck.
 		ducked = false
 		ducking = false
 		player_hull.shape = BBOX_STANDING
-		offset = VIEW_OFFSET
+		offset = CHARACTER_VARS.VIEW_OFFSET
 		if is_on_floor(): position.y += 0.457
 
+# Creates a sinusoidal camera bobbing motion whilst moving.
 func _camera_bob():
 	var bob : float
 	var simvel : Vector3
@@ -366,7 +324,7 @@ func _camera_bob():
 	simvel.y = 0
 	
 	if is_on_floor() && !jump_on:
-		bob = lerp(0.0, sin(Time.get_ticks_msec() * camera_bob_freq) / camera_bob_amp, (simvel.length() / 2.0) / FORWARD_SPEED)
+		bob = lerp(0.0, sin(Time.get_ticks_msec() * CHARACTER_VARS.BOB_FREQUENCY) / CHARACTER_VARS.BOB_FRACTION, (simvel.length() / 2.0) / CHARACTER_VARS.FORWARD_SPEED)
 	else:
 		bob = 0.0
 	camera.position.y = lerp(camera.position.y, bob, 0.5)
@@ -407,6 +365,7 @@ func _calc_roll(rollangle: float, rollspeed: float) -> float:
 	
 	return side * roll_sign
 
+# Creates a smooth interpolation fraction.
 func _spline_fraction(_value: float, _scale: float) -> float:
 	var valueSquared : float;
 
