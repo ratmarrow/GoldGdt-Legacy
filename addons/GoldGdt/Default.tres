@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="CharacterVars" load_steps=2 format=3 uid="uid://y81mrjwmmj8q"]
 
-[ext_resource type="Script" path="res://scripts/CharacterVars.gd" id="1_afycw"]
+[ext_resource type="Script" path="res://addons/GoldGdt/CharacterVars.gd" id="1_afycw"]
 
 [resource]
 script = ExtResource("1_afycw")

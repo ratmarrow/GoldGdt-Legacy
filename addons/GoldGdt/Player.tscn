@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://byo3pgqb3h8p1"]
 
-[ext_resource type="Script" path="res://scripts/GoldGdtMovement.gd" id="1_7vdsq"]
-[ext_resource type="Resource" uid="uid://y81mrjwmmj8q" path="res://scripts/Default.tres" id="2_kn61g"]
+[ext_resource type="Script" path="res://addons/GoldGdt/GoldGdtMovement.gd" id="1_7vdsq"]
+[ext_resource type="Resource" uid="uid://y81mrjwmmj8q" path="res://addons/GoldGdt/Default.tres" id="2_kn61g"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_8dly4"]
 size = Vector3(0.813, 1.829, 0.813)
