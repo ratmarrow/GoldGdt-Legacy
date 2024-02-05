@@ -5,10 +5,10 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 
 ## Changelog
 
-### Update 4.0
+### Update 5.0
 
-- Migrated most movement variables and parameters to use a Resource instead of pre-written variables. Comes with a default Resource pre-loaded.
-- Slightly cleaned up GoldGdtMovement.gd because comments were messy.
+- Actually set up the GoldGdt folder to be a plugin, because by some miracle I managed to forget that.
+- Added a neat little icon to the Player Parameters resource.
 
 ## Roadmap
 
@@ -20,8 +20,9 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 
 ### From GitHub:
 1. Open your Godot project.
-2. Copy the 'addons' folder from this repository into the project folder for your Godot project.
-3. Drop the 'Player' scene found in the add-on into whatever scenes you need it in.
+2. Copy the "addons" folder from this repository into the project folder for your Godot project.
+3. Enable "GoldGdt Character Controller" in your project's addon page.
+4. Drop the "Player" scene found in the add-on into whatever scenes you need it in.
 
 ## Setup
 
@@ -39,3 +40,15 @@ The default physics update rate is 100 frames-per-second in order to make the ph
 
 ![image](https://github.com/ratmarrow/GoldGdt/assets/155324574/f2511d83-2e6f-4ea8-87fe-a987c41bf589)
 
+### Player Parameter Resources
+
+You are able to create a custom Player Parameters resource either locally in the Player scene, or in your directory by right-clicking FileSystem and creating a new resource.
+Search for "PlayerParameters" and it should show up.
+
+![image](https://github.com/ratmarrow/GoldGdt/assets/155324574/c264d522-ae64-4437-af59-4c4047ac69a3)
+
+When editing your custom parameters, BE AWARE that Godot uses meters, and GoldSrc games like Half-Life use inches.
+
+All the values that need to be in meters are under the "Engine Dependant Variables" category.
+
+![image](https://github.com/ratmarrow/GoldGdt/assets/155324574/a05dbf39-9105-4820-a22a-b51dfa5410da)
