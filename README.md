@@ -36,7 +36,11 @@ GoldGdt has pre-defined inputs that it is programmed around. Unless you want to 
 
 The input and physics in the GoldGdtMovement.gd script are handled in `_physics_process()` to ensure that the movement feels consistent regardless of framerate.
 
-The default physics update rate is 100 frames-per-second in order to make the physics behave like Half-Life 1 speedruns [as explained here](https://wiki.sourceruns.org/wiki/FPS_Effects), which in turn makes bunnyhopping faster. This can be changed by going into `Project Settings>Physics>Common`
+In GoldGdt, your physics framerate *does* matter. This is intended, as GoldSrc physics were tied to the application's framerate.
+
+The image below shows what physics settings I developed GoldGdt on, but you can change it to your liking.
+
+I recommend turning off Physics Jitter Fix.
 
 ![image](https://github.com/ratmarrow/GoldGdt/assets/155324574/f2511d83-2e6f-4ea8-87fe-a987c41bf589)
 
