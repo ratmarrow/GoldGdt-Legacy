@@ -121,7 +121,7 @@ func _physics_process(delta):
 	curr_headtrans.origin = global_position + (Vector3.UP * offset)
 	
 	# Create camera tilting.
-	camera.rotation.z = _calc_roll(0.65, 300)*2
+	camera.rotation.z = _calc_roll(PLAYER_PARAMS.ROLL_ANGLE, PLAYER_PARAMS.ROLL_SPEED)*2
 
 # Manipulates the player's camera gimbals for first-person looking
 func _handle_camera() -> void:
