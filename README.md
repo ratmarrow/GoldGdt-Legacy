@@ -7,7 +7,7 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 
 ### Update 6.0
 
-- (3rd-Party-Guy)[https://github.com/3rd-Party-Guy] found and fixed an oversight where the camera roll function was using magic numbers instead of the defined Player Parameters for camera roll.
+- [3rd-Party-Guy](https://github.com/3rd-Party-Guy) found and fixed an oversight where the camera roll function was using magic numbers instead of the defined Player Parameters for camera roll.
 - Implemented third person camera functionality.
   - New Player Parameters for desired camera distance and offset.
   - Currently no native support for switching to 3P models -as it was out of scope for the update. I have plans for it as an ancillary update in the future.
