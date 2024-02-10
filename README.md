@@ -5,16 +5,22 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 
 ## Changelog
 
-### Update 5.0
+### Update 6.0
 
-- Actually set up the GoldGdt folder to be a plugin, because by some miracle I managed to forget that.
-- Added a neat little icon to the Player Parameters resource.
+- (3rd-Party-Guy)[https://github.com/3rd-Party-Guy] found and fixed an oversight where the camera roll function was using magic numbers instead of the defined Player Parameters for camera roll.
+- Implemented third person camera functionality.
+  - New Player Parameters for desired camera distance and offset.
+  - Currently no native support for switching to 3P models -as it was out of scope for the update. I have plans for it as an ancillary update in the future.
+- Implemented an optional bunny-hop cap toggle.
+  - New Player Parameters for the way your velocity gets cropped and a multiplier for how fast above normal speed you can have when performing a jump.
+  - Currently, the "GoldSrc accurate" version of the bunny-hop cap isn't implemented. I plan to add a version of it that doesn't have magic values.
 
 ## Roadmap
 
 - Detection and response for stair-like geometry.
 - Creating a system for ladder and water movement.
-- Viewmodel system (maybe).
+- Viewmodel system (ancillary change).
+- 1P/3P model swapping system (ancillary change).
 
 ## Installation
 
@@ -22,7 +28,8 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 1. Open your Godot project.
 2. Copy the "addons" folder from this repository into the project folder for your Godot project.
 3. Enable "GoldGdt Character Controller" in your project's addon page.
-4. Drop the "Player" scene found in the add-on into whatever scenes you need it in.
+4. Reload your project.
+5. Drop the "Player" scene found in the add-on into whatever scenes you need it in.
 
 ## Setup
 
