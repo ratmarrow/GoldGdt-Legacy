@@ -21,6 +21,7 @@ GoldGdt intends to be an accurate port of the GoldSrc movement code into Godot 4
 - Creating a system for ladder and water movement.
 - Viewmodel system (ancillary change).
 - 1P/3P model swapping system (ancillary change).
+- Refactor for a composition-based architecture (Only when fully feature complete).
 
 ## Installation
 
