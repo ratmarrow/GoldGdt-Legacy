@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://byo3pgqb3h8p1"]
+[gd_scene load_steps=5 format=3 uid="uid://byo3pgqb3h8p1"]
 
 [ext_resource type="Script" path="res://addons/GoldGdt/GoldGdtMovement.gd" id="1_7vdsq"]
 [ext_resource type="Resource" uid="uid://c770d2068in3p" path="res://addons/GoldGdt/Default.tres" id="2_kn61g"]
@@ -6,9 +6,14 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_8dly4"]
 size = Vector3(0.813, 1.829, 0.813)
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_rilad"]
+custom_solver_bias = 1.0
+margin = 0.25
+radius = 0.15
+
 [node name="Player" type="Node3D"]
 
-[node name="Pawn" type="CharacterBody3D" parent="." node_paths=PackedStringArray("duck_timer", "player_hull", "head", "vision", "camera", "speedometer", "info")]
+[node name="Pawn" type="CharacterBody3D" parent="." node_paths=PackedStringArray("duck_timer", "player_hull", "head", "vision", "camera_arm", "camera_anchor", "camera", "speedometer", "info")]
 top_level = true
 collision_layer = 2
 floor_stop_on_slope = false
@@ -21,7 +26,9 @@ duck_timer = NodePath("DuckTimer")
 player_hull = NodePath("BoundingBox")
 head = NodePath("../Head")
 vision = NodePath("../Head/Vision")
-camera = NodePath("../Head/Vision/Camera3D")
+camera_arm = NodePath("../Head/Vision/Arm")
+camera_anchor = NodePath("../Head/Vision/Arm/Anchor")
+camera = NodePath("../Head/Vision/Arm/Anchor/Camera")
 speedometer = NodePath("../HUD/Speedometer")
 info = NodePath("../HUD/Player Info")
 
@@ -37,7 +44,16 @@ top_level = true
 
 [node name="Vision" type="Node3D" parent="Head"]
 
-[node name="Camera3D" type="Camera3D" parent="Head/Vision"]
+[node name="Arm" type="SpringArm3D" parent="Head/Vision"]
+shape = SubResource("SphereShape3D_rilad")
+spring_length = 1.829
+margin = 0.1
+
+[node name="Anchor" type="Node3D" parent="Head/Vision/Arm"]
+editor_description = "
+"
+
+[node name="Camera" type="Camera3D" parent="Head/Vision/Arm/Anchor"]
 fov = 110.0
 near = 0.001
 

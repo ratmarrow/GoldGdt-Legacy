@@ -48,15 +48,20 @@ var BBOX_STANDING = BoxShape3D.new() # Cached BoxShape for standing.
 var BBOX_DUCKING = BoxShape3D.new() # Cached BoxShape for ducking.
 @export var player_hull : CollisionShape3D ## Player collision shape/hull, make sure it's a box unless you edit the script to use otherwise!
 
-@export_group("Camera")
+@export_group("Player View")
 var head_resting_position : Vector3 # Created during _physics_process() to position the player's head.
 var offset : float = 0.711 # Current offset from player's origin.
 var look_input : Vector2 # Collector for mouse input.
 var prev_headtrans : Transform3D # Used for camera position interpolation.
 var curr_headtrans : Transform3D # Used for camera position interpolation.
 
+@export_subgroup("Gimbal")
 @export var head : Node3D ## Y-axis camera gimbal; also determines position of player's view.
 @export var vision : Node3D ## X-axis camera gimbal.
+
+@export_subgroup("Camera")
+@export var camera_arm : SpringArm3D ## SpringArm3D that has it's rotation and extension distance set automatically.
+@export var camera_anchor : Node3D ## Camera anchor node that is automatically rotated to compensate for the camera arm rotation.
 @export var camera : Node3D ## Used for player view aesthetics such as camera tilt and bobbing.
 
 @export_group("UI")
@@ -86,20 +91,24 @@ func _input(event):
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			look_input.x = event.relative.x
 			look_input.y = event.relative.y
-			_handle_camera()
+			_handle_camera_input()
 
 # Using _process() to handle camera look logic
 func _process(delta):
 	# Interpolate the player's resting position to the desired transform position.
-	head_resting_position = prev_headtrans.interpolate_with(curr_headtrans, clamp(Engine.get_physics_interpolation_fraction(), 0, 0.925)).origin
+	head_resting_position = prev_headtrans.interpolate_with(curr_headtrans, clamp(Engine.get_physics_interpolation_fraction(), 0, 0.95)).origin
 	head.global_position = head_resting_position
+	
+	# Modify camera nodes to conform with Player Parameters.
+	# TODO: I have to make this not run every frame, but as far as I can tell, there is negligible impact on performance, so it stays.
+	_handle_camera_settings()
 	
 	#region Character Info UI, remove if deemed necessary
 	var speed_format = "%s in/s (goldsrc)\n%s m/s (godot)"
 	var speed_string = speed_format % [str(roundi((Vector3(velocity.x * 39.37, 0.0, velocity.z * 39.37).length()))), str(roundi((Vector3(velocity.x, 0.0, velocity.z).length())))]
 	speedometer.text = speed_string
 	
-	var info_format = "rendering fps: %s\nframetime: %s\npos (meters): %s\nvel (meters): %s\ngrounded: %s\ncrouching: %s"
+	var info_format = "rendering fps: %s\nphysics frametime: %s\npos (meters): %s\nvel (meters): %s\ngrounded: %s\ncrouching: %s"
 	var info_string = info_format % [str(Engine.get_frames_per_second()), str(get_physics_process_delta_time()), str(position), str(velocity), str(is_on_floor()), str(ducked)]
 	info.text = info_string
 	#endregion
@@ -124,10 +133,26 @@ func _physics_process(delta):
 	camera.rotation.z = _calc_roll(PLAYER_PARAMS.ROLL_ANGLE, PLAYER_PARAMS.ROLL_SPEED)*2
 
 # Manipulates the player's camera gimbals for first-person looking
-func _handle_camera() -> void:
+func _handle_camera_input() -> void:
 	head.rotation.y -= (look_input.x * PLAYER_PARAMS.MOUSE_SENSITIVITY) * 0.0001
 	vision.rotation.x = clamp(vision.rotation.x - (look_input.y * PLAYER_PARAMS.MOUSE_SENSITIVITY) * 0.0001, -1.5, 1.5)
 	look_input = Vector2.ZERO
+
+# Manipulates the camera arm based on Player Parameters.
+func _handle_camera_settings() -> void:
+	# Check if we are using third person.
+	if (PLAYER_PARAMS.THIRD_PERSON_CAMERA):
+		# If so, rotate camera parts to "move" the camera.
+		camera_arm.spring_length = PLAYER_PARAMS.ARM_LENGTH
+		camera_arm.rotation_degrees = Vector3(PLAYER_PARAMS.ARM_OFFSET_DEGREES.x, PLAYER_PARAMS.ARM_OFFSET_DEGREES.y, 0)
+		camera_anchor.rotation_degrees.x = -PLAYER_PARAMS.ARM_OFFSET_DEGREES.x
+		camera.rotation_degrees.y = -PLAYER_PARAMS.ARM_OFFSET_DEGREES.y
+	else:
+		# If not, reset.
+		camera_arm.spring_length = 0
+		camera_arm.rotation_degrees = Vector3.ZERO
+		camera_anchor.rotation_degrees.x = 0
+		camera.rotation_degrees.y = 0
 
 # Intercepts CharacterBody3D collision logic a bit to add slope sliding, recreating surfing
 func _handle_collision() -> void:
@@ -150,6 +175,10 @@ func _handle_input() -> void:
 	
 	# Create vector that stores speed and direction.
 	move_dir = head.transform.basis * Vector3(input_vector.x * PLAYER_PARAMS.SIDE_SPEED, 0, input_vector.y * PLAYER_PARAMS.FORWARD_SPEED)
+	
+	# Clamp desired speed to max speed
+	if (move_dir.length() > PLAYER_PARAMS.MAX_SPEED):
+		move_dir *= PLAYER_PARAMS.MAX_SPEED / move_dir.length()
 	
 	# Gather jumping and crouching input.
 	jump_on = Input.is_action_pressed("pm_jump") if PLAYER_PARAMS.AUTOHOP else Input.is_action_just_pressed("pm_jump")
@@ -177,7 +206,7 @@ func _handle_movement(delta: float) -> void:
 	_camera_bob()
 
 # Adds to the player's velocity based on direction, speed and acceleration.
-func _accelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: float):
+func _accelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: float) -> void:
 	var addspeed : float
 	var accelspeed : float
 	var currentspeed : float
@@ -204,7 +233,7 @@ func _accelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: float)
 
 # Adds to the player's velocity based on direction, speed and acceleration. 
 # The difference between _accelerate() and this function is it caps the maximum speed you can accelerate to.
-func _airaccelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: float):
+func _airaccelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: float) -> void:
 	var addspeed : float
 	var accelspeed : float
 	var currentspeed : float
@@ -234,7 +263,7 @@ func _airaccelerate(delta: float, wishdir: Vector3, wishspeed: float, accel: flo
 	velocity += accelspeed * wishdir
 
 # Applies friction to the player's horizontal velocity
-func _friction(delta: float, strength: float):
+func _friction(delta: float, strength: float) -> void:
 	var speed = velocity.length()
 	
 	# Bleed off some speed, but if we have less that the bleed
@@ -256,6 +285,26 @@ func _friction(delta: float, strength: float):
 	velocity.x *= newspeed
 	velocity.z *= newspeed
 
+# Crops velocity if above a speed threshold, not used if PLAYER_PARAMS.SPEED_CROP_MODE is set to NONE
+func _scale_velocity() -> void:
+	var spd : float
+	var fraction : float
+	var maxscaledspeed : float
+	
+	maxscaledspeed = PLAYER_PARAMS.SPEED_THRESHOLD_FACTOR * PLAYER_PARAMS.MAX_SPEED
+	
+	if (maxscaledspeed <= 0): 
+		return
+	
+	spd = Vector3(velocity.x, 0.0, velocity.z).length()
+	
+	if (spd <= maxscaledspeed): return
+	
+	fraction = (maxscaledspeed / spd)
+	
+	velocity.x *= fraction
+	velocity.z *= fraction
+
 # Applies a jump force to the player.
 func _do_jump(delta: float) -> void:
 	# Apply the jump impulse
@@ -263,6 +312,10 @@ func _do_jump(delta: float) -> void:
 	
 	# Add in some gravity correction
 	velocity.y -= (PLAYER_PARAMS.GRAVITY * delta * 0.5 )
+	
+	# If the Player Parameters wants us to clip the velocity, do it.
+	if (PLAYER_PARAMS.SPEED_CROP_MODE != PLAYER_PARAMS.SpeedCropMode.NONE):
+		_scale_velocity()
 
 # Handles crouching logic.
 func _duck() -> void:

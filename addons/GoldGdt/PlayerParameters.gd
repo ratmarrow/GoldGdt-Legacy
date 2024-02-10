@@ -2,12 +2,20 @@
 extends Resource
 class_name PlayerParameters
 
+enum SpeedCropMode {
+	NONE, ## Does not crop your velocity.
+	THRESHOLD ## Crops your velocity to the speed threshold.
+	# TODO: Add in "DROP" mode that brings you down to base speed if you exceed the threshold.
+}
+
 @export_group("Configuration")
+@export var THIRD_PERSON_CAMERA : bool = false
 @export var AUTOHOP : bool = false ## Tells the character to check for the jump action being held instead of pressed, which will make all jumps perfect bunny hops.
 
 @export_group("Engine Dependant Variables")
-@export var FORWARD_SPEED : float = 8.128 ## Forward and backward move speed. The default value equals 8.128 (or 320 Hammer units/inches).
-@export var SIDE_SPEED : float = 8.128 ## Left and right move speed. The default value equals 8.128 (or 320 Hammer units/inches).
+@export var FORWARD_SPEED : float = 10.16 ## Forward and backward move speed. The default value equals 8.128 (or 320 Hammer units/inches).
+@export var SIDE_SPEED : float = 10.16 ## Left and right move speed. The default value equals 8.128 (or 320 Hammer units/inches).
+@export var MAX_SPEED : float = 8.128 ## Maximum speed your inputs have in their directions. The default value equals 8.128 (or 320 Hammer units/inches).
 @export var MAX_AIR_SPEED : float = 0.762 ## The maximum speed you can accelerate to in the [method _airaccelerate] function. The default value equals 0.762 (or 30 Hammer units/inches).
 @export var STOP_SPEED : float = 2.54 ## Speed threshold for stopping in the [method _friction] function. The default value equals 2.540 (or 100 Hammer units/inches).
 @export var GRAVITY : float = 20.32 ## Speed of gravity. The default value equals 20.320 (or 800 Hammer units/inches).
@@ -20,14 +28,20 @@ class_name PlayerParameters
 @export var DUCK_VIEW_OFFSET : float = 0.305 ## How much the camera hovers from player origin while crouching. The default value equals 0.305 (or 12 Hammer units/inches).
 
 @export_group("Engine Agnostic Variables")
+@export var SPEED_CROP_MODE : SpeedCropMode = SpeedCropMode.NONE ## How the player responds when jumping while past the speed threshold.
+@export var SPEED_THRESHOLD_FACTOR : float = 1.7 ## Multiplied with [code]MAX_SPEED[/code] to create a maximum speed threshold to mitigate bunny-hopping if you desire it.[br][br]This value does nothing if [code]SPEED_CROP_MODE[/code] is set to [param NONE]
 @export var ACCELERATION : float = 10.0 ## The base acceleration amount that is multiplied by [code]wishspeed[/code] inside of [method _accelerate]. The default value equals 10.
 @export var AIR_ACCELERATION : float = 10.0 ## The base acceleration amount that is multiplied by [code]wishspeed[/code] inside of [method _airaccelerate]. The default value equals 10.
 @export var FRICTION : float = 4.0 ## The multiplier of dropped speed when friction is acting on the player. The default value equals 4.
 @export var DUCKING_SPEED_MULTIPLIER : float = 0.333; ## The multiplier placed on the player's desired input speed while ducking. The default value equals 0.333.
 
-@export_subgroup("Camera")
+@export_group("Camera")
 @export var MOUSE_SENSITIVITY : float = 15.0 ## How fast the camera moves in response to player input. The default value equals 15.
 @export var BOB_FREQUENCY : float = 0.008
 @export var BOB_FRACTION : float = 12
 @export var ROLL_ANGLE : float = 0.65
 @export var ROLL_SPEED : float = 300
+
+@export_subgroup("Third Person Settings (If Enabled)") ## Ignore if third-person camera is off.
+@export var ARM_LENGTH : float = 2 ## How far the camera arm extends in meters.
+@export var ARM_OFFSET_DEGREES : Vector2 = Vector2.ZERO ## Offsets position of camera using rotation in degrees.
